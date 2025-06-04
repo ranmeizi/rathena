@@ -1,0 +1,141 @@
+// 爱尔帕兰钟楼1层 古钟魔
+alb2trea,100,100,5	script	古钟魔#ffxdz	100,{
+    mes "[古钟魔]";
+    mes "当前时间：" + gettimestr("%H:%M:%S",21);
+    next;
+    switch(select("大调查一下它:无视他")) {
+        case 1:
+            mes "[你]";
+            mes "（你把钟捅坏了！）";
+            close2;
+            announce "保安：请跟我们走一趟！",bc_map;
+            sleep2 1000;
+            warp "alb2trea",110,110; // 钟塔背后
+            donpcevent "保安1::OnTalk";
+            end;
+        case 2:
+            mes "你选择了无视。";
+            close;
+    }
+}
+
+// 钟塔背后 保安
+alb2trea,110,112,5	script	保安1	100,{
+    mes "[保安]";
+    mes "你必须帮我们修复，否则就去坐牢吧。";
+    next;
+    mes "去钟塔3楼找钟匠问问吧。";
+    set quest_clock,1;
+    close;
+}
+
+// 钟塔3楼 钟匠
+alb3trea,120,120,5	script	钟匠#clock	100,{
+    if (quest_clock < 1) end;
+    mes "[钟匠]";
+    mes "天塌啦天塌啦，钟楼怎么不转了？你做了什么？你个罪人！";
+    next;
+    switch(select("认错了:我能修好")) {
+        case 1:
+            mes "去普隆德拉教堂找大神父，收集30个绿色药草。";
+            set quest_clock,2;
+            close;
+        case 2:
+            mes "那就去击杀30个钟怪吧！";
+            set quest_clock,3;
+            close;
+    }
+}
+
+// 普隆德拉教堂 大神父
+prontera,180,250,5	script	大神父#herb	100,{
+    if (quest_clock != 2) end;
+    mes "[大神父]";
+    mes "你要30个绿色药草？好，收集齐了再来找我。";
+    if (countitem(501) < 30) close; // 501为绿色药草
+    delitem 501,30;
+    mes "很好，你完成了钟楼的悔过。";
+    set quest_clock,4;
+    close;
+}
+
+// 钟怪击杀计数（示例，需配合mob杀怪脚本）
+-	script	钟怪计数#kill	-1,{
+    OnNPCKillEvent:
+    if (quest_clock == 3 && killedrid == 1268) { // 1268为钟怪ID
+        set clock_kill, clock_kill + 1;
+        if (clock_kill >= 30) {
+            dispbottom "你已经击杀了30个钟怪，回去找钟匠吧！";
+            set quest_clock,4;
+        }
+    }
+    end;
+}
+
+// 钟匠后续分支
+alb3trea,120,120,5	script	钟匠#clock2	100,{
+    if (quest_clock != 4) end;
+    mes "[钟匠]";
+    mes "你终于完成了悔过/武力考验。现在还有两种修复方案：";
+    next;
+    switch(select("传统派:创新派")) {
+        case 1:
+            mes "收集蜂蜜、原木块、黏黏的毒液各10个。";
+            if (countitem(518) < 10 || countitem(7038) < 10 || countitem(1059) < 10) close; // 示例ID
+            delitem 518,10; delitem 7038,10; delitem 1059,10;
+            mes "修复失败，钟楼爆炸！你获得600个指针。";
+            getitem 7420,600; // 指针
+            set quest_clock,99; // BAD END
+            close;
+        case 2:
+            mes "去朱诺图书馆找线索。";
+            set quest_clock,5;
+            close;
+    }
+}
+
+// 朱诺图书馆 管理员
+yuno_in01,50,100,5	script	管理员#lib	100,{
+    if (quest_clock != 5) end;
+    mes "[管理员]";
+    mes "你要查钟塔维修记录？去看爱因斯坦的相对论吧。";
+    set quest_clock,6;
+    close;
+}
+
+// 迷藏森林2层 爱因斯坦
+moc_fild20,200,200,5	script	爱因斯坦#ein	100,{
+    if (quest_clock != 6) end;
+    mes "[爱因斯坦]";
+    mes "你需要手提灯*10、铁*10、催化剂*500。";
+    if (countitem(705) < 10 || countitem(999) < 10 || countitem(601) < 500) close; // 示例ID
+    delitem 705,10; delitem 999,10; delitem 601,500;
+    mes "给你手持黑洞。";
+    getitem 30000,1; // 手持黑洞
+    set quest_clock,7;
+    close;
+}
+
+// 古钟魔倒转时间
+alb2trea,100,100,5	script	古钟魔#ffxdz2	100,{
+    if (quest_clock != 7 || countitem(30000) < 1) end;
+    mes "[古钟魔]";
+    mes "你使用手持黑洞，时间开始倒流！";
+    delitem 30000,1;
+    specialeffect2 EF_CLOCK;
+    sleep2 1000;
+    warp "ordeal_1-1",50,50; // 传送到异空间
+    set quest_clock,8;
+    end;
+}
+
+// 异空间 古钟魔赠送月光宝盒
+ordeal_1-1,50,50,5	script	古钟魔#moon	100,{
+    if (quest_clock != 8) end;
+    mes "[古钟魔]";
+    mes "感谢你让我回到过去！这是你的奖励：月光宝盒。";
+    getitem 30001,1; // 月光宝盒
+    set quest_clock,100; // 完成
+    close;
+}
+// ...existing code...
